@@ -1,4 +1,10 @@
 import React from 'react';
+import {
+  BrowserRouter,
+  Route,
+  Link
+} from 'react-router-dom'
+import Robot from './pages/robot'
 import { Layout, Menu, Breadcrumb, Input, Table, Tag, Space, Button, Modal, Form } from 'antd';
 import {
   DesktopOutlined,
@@ -7,6 +13,7 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import slideBarConfig from './sideBarConfig'
 
 import './App.css';
 
@@ -191,6 +198,81 @@ class App extends React.Component {
     }, 2000);
   };
 
+//处理左侧菜单
+getSubmenu = () => {
+  return slideBarConfig.map(item => {
+      if(!item.children || item.children.length === 0){    //如果当前路由没有子路由且该路由的hidden为false或不设置该路由的hidden时则直接显示该路由，若该路由的hidden为true则不显示该路由
+          if(item.hidden) return false
+
+          return (
+              <Menu.Item key={item.url} icon={item.icon}>
+                  {/* <Icon type={item.icon} /> */}
+                      <span>{item.name}</span>
+                  
+              </Menu.Item>
+          )               
+      }else if(item.children && item.children.length === 1){
+          if(item.hidden) return false
+
+          let noHiddenRouter = [];
+          let hiddenRouter = [];
+          item.children.map(v => {
+              if(v.hidden){
+                  hiddenRouter.push(v)
+              }else{                        
+                  noHiddenRouter.push(v)
+              }
+
+              return true
+          })
+
+          if(hiddenRouter.length > 0){ //当子路由只有一个且该子路由的hidden为true同时其父路由的hidden为false或不设置其父路由的hidden时则显示其父路由
+              return <Menu.Item key={item.url} icon={item.icon}>
+                {/* <Icon type={item.icon} /> */}
+                <span>{item.name}</span></Menu.Item>
+          }
+
+          if(noHiddenRouter.length > 0){ //当子路由只有一个且该子路由的hidden为false或不设置该子路由的hidden时则显示其父路由和下拉的子路由                    
+              return (
+                  <SubMenu key={item.url} icon={item.icon} title={<span>555<span>{item.name}</span></span>}>
+                      {
+                          noHiddenRouter.map(v => {                                
+                              return <Menu.Item key={v.url} >{v.name}</Menu.Item>                               
+                          })
+                      }
+                  </SubMenu>
+              )
+          }
+      }else if(item.children && item.children.length > 1){  //当当前路由有两个及两个以上子路由时，若两个子路由的hidden都为true时则该路由和其子路由全部隐藏
+          if(item.hidden) return false
+
+          let noHiddenRouter = [];
+          item.children.map(v => {
+              if(v.hidden){
+                  return <Menu.Item key={item.url} icon={item.icon}><span>{item.name}</span></Menu.Item>
+              }else{                        
+                  noHiddenRouter.push(v)
+                  return true
+              }
+          })
+
+          if(noHiddenRouter.length > 0){
+              return (
+                  <SubMenu key={item.url} icon={item.icon} title={<span>444<span>{item.name}</span></span>}>
+                      {
+                          noHiddenRouter.map(v => {                                
+                              return <Menu.Item key={v.url}>{v.name}
+                              </Menu.Item>                               
+                          })
+                      }
+                  </SubMenu>
+              )
+          }
+      }
+
+      return true
+  });
+}
 
   render() {
     const { visible, confirmLoading } = this.state;
@@ -198,7 +280,7 @@ class App extends React.Component {
       <Layout style={{ minHeight: '100vh' }}>
         <Sider collapsible collapsed={this.state.collapsed} onCollapse={this.onCollapse}>
           <div className="logo" />
-          <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
+          {/* <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
             <Menu.Item key="1" icon={<PieChartOutlined />}>
               Option 1
             </Menu.Item>
@@ -215,6 +297,9 @@ class App extends React.Component {
               <Menu.Item key="8">Team 2</Menu.Item>
             </SubMenu>
             <Menu.Item key="9" icon={<FileOutlined />} />
+          </Menu> */}
+          <Menu theme="dark" mode="inline" >
+                            {this.getSubmenu()}
           </Menu>
         </Sider>
         <Layout className="site-layout">
@@ -259,6 +344,9 @@ class App extends React.Component {
               </Modal>
             </div>
           </Content>
+          <BrowserRouter>
+            <Route path='/robot' component={Robot}/>
+          </BrowserRouter>
           <Footer style={{ textAlign: 'center' }}>Ant Design ©2018 Created by Ant UED</Footer>
         </Layout>
       </Layout>
